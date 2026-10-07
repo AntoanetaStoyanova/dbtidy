@@ -9,8 +9,7 @@ Standards de développement du projet. Ces règles s'appliquent à tout contribu
 Obligatoires partout — arguments, valeurs de retour, variables ambiguës.
 
 ```python
-def process(data: list[str], limit: int = 10) -> dict[str, int]:
-    ...
+def process(data: list[str], limit: int = 10) -> dict[str, int]: ...
 ```
 
 - `mypy --strict` doit passer sans erreur

@@ -1,0 +1,12 @@
+name: jaffle_shop_oracle
+version: "1.0.0"
+profile: jaffle_shop_oracle
+
+model-paths: ["models"]
+
+models:
+  jaffle_shop_oracle:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table

@@ -1,0 +1,17 @@
+{
+  "template": "https://github.com/AntoanetaStoyanova/python-project-template",
+  "commit": "7ccbe2cd513af39ec26d5c1dca45ca3d7611b00c",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "project_name": "dbtidy",
+      "project_slug": "dbtidy",
+      "author": "Antoaneta Stoyanova",
+      "description": "Linter et convertisseur de projets dbt sur Oracle, attentif aux couches.",
+      "python_version": "3.13",
+      "_template": "https://github.com/AntoanetaStoyanova/python-project-template",
+      "_commit": "7ccbe2cd513af39ec26d5c1dca45ca3d7611b00c"
+    }
+  },
+  "directory": null
+}

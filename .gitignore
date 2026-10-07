@@ -39,7 +39,7 @@ coverage.xml
 cover/
 *.mo
 *.pot
-src/dbtidy/log/
+*.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
@@ -52,7 +52,6 @@ target/
 .ipynb_checkpoints
 profile_default/
 ipython_config.py
-src/dbtidy/config/
 src/dbtidy/.env
 .env
 .envrc
