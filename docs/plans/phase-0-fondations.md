@@ -103,7 +103,7 @@ Correctifs appliqués au projet généré (à reporter dans `python-project-temp
 - `.gitignore` ignorait `src/dbtidy/log/` et `src/dbtidy/config/` : ces paquets n'étaient pas versionnés, alors que `__main__.py` importe `dbtidy.log`. Remplacé par `*.log`.
 - Packaging : `where = ["."]` + `include = ["src*"]` exposait `src.dbtidy`. Remplacé par `where = ["src"]` ; pytest `pythonpath = ["src"]`.
 - `setuptools>=77` requis pour `license = "MIT"` (PEP 639).
-- `uv.lock` était ignoré par le template, donc la CI résolvait les versions à chaque exécution. Corrigé le 9 octobre 2026 : `uv.lock` versionné et `uv sync --locked` dans les workflows `ci`, `docs` et `publish`, pour que la CI teste la même version de `sqlglot` qu'en local.
+- `uv.lock` était ignoré par le template, donc la CI résolvait les versions à chaque exécution. Corrigé le 9 octobre 2026 : `uv.lock` versionné et `uv sync --locked` dans les workflows `ci`, `docs` et `publish`, pour que la CI teste la même version de `sqlglot` qu'en local. *Annulé le même jour (choix de l'utilisatrice) : `uv.lock` reste ignoré et les workflows font `uv sync`.*
 
 pre-commit : ruff format, ruff check et mypy au commit, pytest au push. Installation : `uv run pre-commit install --hook-type pre-commit --hook-type pre-push`.
 

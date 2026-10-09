@@ -196,6 +196,7 @@
   - 8 tests ajoutés ; CHANGELOG 0.2.0 (« Corrigé »), README et `docs/cli.rst` (noqa) ;
   - CI verte : 112 tests, couverture 99 %.
   - `log/`, `data/`, `notebook/` (hérités du template, inutilisés) : conservés pour le moment (décision de l'utilisatrice).
+- Commit `c1422f8` poussé sur `develop` et `main` : CI et Docs rouges, car `uv.lock` (de nouveau dans `.gitignore`) manquait pour `uv sync --locked`. Décision de l'utilisatrice : ne pas versionner `uv.lock` ; les trois workflows reviennent à `uv sync` (versions résolues à chaque exécution).
 
 ### Reste à faire
 
