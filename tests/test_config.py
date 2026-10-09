@@ -161,3 +161,46 @@ def test_validate_config_missing_file_exits_2(
     assert "introuvable" in capsys.readouterr().err
     monkeypatch.chdir(tmp_path)
     assert main(["validate-config"]) == 2
+
+
+@pytest.mark.parametrize(
+    ("content", "line"),
+    [
+        ("colonnes: lower\n", "  colonnes: clé inconnue"),
+        (
+            "rules:\n  STG002: fatal\n",
+            "  rules.STG002: valeur invalide, attendu error, warning ou off",
+        ),
+        (
+            "columns_case: camel\n",
+            "  columns_case: valeur invalide, attendu lower ou upper",
+        ),
+        ("rules:\n  STG999: error\n", "  rules: code de règle inconnu : STG999"),
+        (
+            "oracle:\n  max_identifier_length: 0\n",
+            "  oracle.max_identifier_length: doit être supérieur à 0",
+        ),
+        (
+            "oracle:\n  max_identifier_length: abc\n",
+            "  oracle.max_identifier_length: nombre entier attendu",
+        ),
+        (
+            "layers:\n  staging:\n    prefixes: stg_\n",
+            "  layers.staging.prefixes: liste attendue",
+        ),
+        ("rules: [STG001]\n", "  rules: dictionnaire attendu"),
+    ],
+)
+def test_error_messages_in_french(tmp_path: Path, content: str, line: str) -> None:
+    with pytest.raises(ConfigError) as exc:
+        load_config(_write(tmp_path, content))
+    message = str(exc.value)
+    assert line in message.splitlines()[1]
+    assert "Input should" not in message
+    assert "Value error" not in message
+
+
+def test_rule_codes_case_insensitive(tmp_path: Path) -> None:
+    config = load_config(_write(tmp_path, "rules:\n  stg002: off\n  Ora002: error\n"))
+    assert config.rules["STG002"] is Severity.OFF
+    assert config.rules["ORA002"] is Severity.ERROR

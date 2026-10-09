@@ -45,4 +45,3 @@ def test_strict_and_lenient_configs_differ() -> None:
     assert (strict.count(Severity.ERROR), strict.count(Severity.WARNING)) == (22, 0)
     assert (lenient.count(Severity.ERROR), lenient.count(Severity.WARNING)) == (0, 22)
     assert (strict.exit_code, lenient.exit_code) == (1, 0)
-

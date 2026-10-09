@@ -21,7 +21,7 @@ ORA et NAM s'appliquent à toutes les couches.
    * - STG003
      - error
      - Pas d'agrégation dans le staging (``GROUP BY``, ``SUM``, ``COUNT``,
-       ``DISTINCT``…), hors fonctions analytiques.
+       ``DISTINCT``…), hors fonctions analytiques et filtre incrémental.
    * - STG004
      - error
      - Le staging lit une source, pas un autre modèle (``ref()``).
@@ -75,7 +75,13 @@ STG003 — pas d'agrégation
       group by client_id
 
    ``row_number() over (...)`` et les autres fonctions analytiques restent
-   autorisées.
+   autorisées, comme le filtre incrémental qui lit ``{{ this }}`` :
+
+   .. code-block:: sql+jinja
+
+      {% if is_incremental() %}
+      where date_maj > (select max(date_maj) from {{ this }})   -- conforme
+      {% endif %}
 
 STG004 — pas de ``ref()``
    .. code-block:: sql+jinja

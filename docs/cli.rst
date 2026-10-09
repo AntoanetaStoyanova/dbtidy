@@ -27,7 +27,8 @@ Avec ``--json``, la sortie est un objet ``files``, ``violations`` (``path``,
 ``exit_code``.
 
 Pour ignorer une règle sur une ligne, ajoutez un commentaire ``-- noqa: STG002``,
-ou ``-- noqa`` pour toutes les règles.
+ou ``-- noqa`` pour toutes les règles. Un texte libre peut suivre les codes
+(``-- noqa: STG002 jointure voulue``).
 
 ``dbtidy validate-config``
 --------------------------

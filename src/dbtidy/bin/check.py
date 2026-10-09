@@ -16,7 +16,9 @@ from dbtidy.bin.rules import Model, Violation, apply_rules
 from dbtidy.config import Config, Severity
 
 EXCLUDED_DIRS = {"target", "dbt_packages"}
-_NOQA = re.compile(r"--\s*noqa\b(?:\s*:\s*(?P<codes>[\w\s,]+))?", re.I)
+_NOQA = re.compile(
+    r"--\s*noqa\b(?:\s*:\s*(?P<codes>[a-z]+\d+(?:\s*,\s*[a-z]+\d+)*))?", re.I
+)
 
 
 @dataclass(frozen=True)
@@ -130,6 +132,9 @@ def check_file(path: Path, config: Config) -> list[Violation]:
     """
     Analyse un modèle et renvoie ses violations, hors lignes `-- noqa`.
 
+    Un modèle sans SQL (vide, ou seulement du Jinja et des commentaires) n'a
+    aucune violation.
+
     Parameters
     ----------
     path : Path
@@ -151,6 +156,8 @@ def check_file(path: Path, config: Config) -> list[Violation]:
     """
     raw = path.read_text(encoding="utf-8")
     substitution = substitute(raw)
+    if not sqlglot.tokenize(substitution.sql, dialect="oracle"):
+        return []
     tree = sqlglot.parse_one(substitution.sql, dialect="oracle")
     model = Model(
         path,
@@ -192,7 +199,9 @@ def run_check(paths: Iterable[Path], config: Config) -> Report:
         report.files += 1
         try:
             report.violations.extend(check_file(path, config))
-        except (OSError, UnicodeDecodeError, SqlglotError) as error:
+        except (OSError, UnicodeDecodeError) as error:
+            report.errors.append(CheckError(path, f"fichier illisible : {error}"))
+        except SqlglotError as error:
             first_line = str(error).splitlines()[0] if str(error) else repr(error)
             report.errors.append(CheckError(path, f"SQL non analysable : {first_line}"))
     return report

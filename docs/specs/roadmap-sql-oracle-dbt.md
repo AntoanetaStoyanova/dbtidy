@@ -64,14 +64,14 @@ Rythme pensé pour du temps libre, avec de la marge : si une étape déborde, c'
 
 Objectif : lever le risque technique principal et avoir un dépôt propre avant d'écrire la première règle. Durée indicative : 2 à 3 semaines.
 
-- [ ] Valider l'idée avec le tuteur (projet open source perso, utilisable ensuite par l'équipe)
-- [ ] Tester `sqlglot` sur 10 à 15 requêtes Oracle typiques : jointures `(+)`, `NVL`, `DECODE`, `ROWNUM`, `CONNECT BY`, `MERGE`
-- [ ] Tester le parsing d'un modèle dbt contenant du Jinja (`{{ ref() }}`, `{{ source() }}`) après remplacement par des noms factices
-- [ ] Lire les règles de dbt-project-evaluator et noter celles à reprendre ou à écarter
-- [ ] Lister les conventions de l'équipe (préfixes, dossiers, casse) sous une forme générique, sans rien de confidentiel
-- [ ] Créer le dépôt : structure `src/`, `tests/`, `pyproject.toml`, pre-commit, CI qui lance ruff, mypy et pytest
-- [ ] Vérifier que `dbtidy` est libre sur PyPI
-- [ ] Ajouter une licence (MIT) au dépôt
+- [x] ~~Valider l'idée avec le tuteur (projet open source perso, utilisable ensuite par l'équipe)~~ — abandonnée (décision du 9 octobre 2026)
+- [x] Tester `sqlglot` sur 10 à 15 requêtes Oracle typiques : jointures `(+)`, `NVL`, `DECODE`, `ROWNUM`, `CONNECT BY`, `MERGE`
+- [x] Tester le parsing d'un modèle dbt contenant du Jinja (`{{ ref() }}`, `{{ source() }}`) après remplacement par des noms factices
+- [x] Lire les règles de dbt-project-evaluator et noter celles à reprendre ou à écarter
+- [x] Lister les conventions de l'équipe (préfixes, dossiers, casse) sous une forme générique, sans rien de confidentiel
+- [x] Créer le dépôt : structure `src/`, `tests/`, `pyproject.toml`, pre-commit, CI qui lance ruff, mypy et pytest
+- [x] Vérifier que `dbtidy` est libre sur PyPI
+- [x] Ajouter une licence (MIT) au dépôt
 
 **Terminé quand** : un script de 20 lignes parse une requête Oracle legacy et affiche ses tables, jointures et agrégations, et la CI est verte.
 
@@ -91,7 +91,7 @@ Objectif : une commande qui analyse les modèles staging d'un projet dbt et bloq
 
 **Fonctionnement**
 
-1. Trouver les modèles staging par préfixe (`stg_`, `int_`, `fct_`, `dim_`, en dur pour cette version) ; le dossier (`models/staging/`, etc.) n'est qu'une vérification secondaire, pas le critère de classification.
+1. Trouver les modèles staging par préfixe (`stg_`, `int_`, `fct_`, `dim_`, en dur pour cette version ; configurables depuis la v0.2) ; le dossier (`models/staging/`, etc.) n'est qu'une vérification secondaire, pas le critère de classification.
 2. Remplacer les appels Jinja `ref()` et `source()` par des noms factices de même longueur, en gardant la trace de ce qu'ils désignaient, pour que les numéros de ligne rapportés restent corrects.
 3. Parser le SQL avec `sqlglot` (dialecte Oracle) et appliquer chaque règle sur l'arbre syntaxique.
 4. Afficher chaque violation : fichier, ligne, code, message en français, piste de correction. Seul un code `error` fait échouer la commande (exit 1) ; un `warning` s'affiche sans faire échouer.
@@ -132,7 +132,7 @@ rules:
 
 Objectif : transformer une requête Oracle en modèles dbt en couches, conformes aux conventions dès leur création. C'est la version la plus ambitieuse. Durée indicative : 8 à 10 semaines.
 
-1. Repérer les tables sources et générer `sources.yml` ; le schéma/base Oracle cible n'est pas déductible du SQL seul, il vient d'un flag CLI (`--schema=...`) ou d'un petit fichier de mapping.
+1. Repérer les tables sources et générer `sources.yml` ; le schéma/base Oracle cible n'est pas déductible du SQL seul, il vient du mapping de `dbtidy.yml` (décision v0.3, voir [v0.3-convert.md](v0.3-convert.md)).
 2. Créer un modèle staging par table source : seulement les colonnes utilisées, renommées selon les conventions.
 3. Placer jointures et logique métier dans des modèles intermediate, avec des `ref()`.
 4. Placer le `SELECT` final dans un modèle marts.

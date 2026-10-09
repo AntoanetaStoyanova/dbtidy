@@ -16,14 +16,14 @@ Ces décisions corrigent ou précisent la roadmap et s'appliquent à partir de m
 | Nom du projet | `dbtidy`, définitif (plus "à définir") | Déjà le nom du dépôt et du package |
 | Documentation | Sphinx + `furo` | Déjà en place via le template cruft, pas `mkdocs-material` |
 | Licence | MIT | Permissive, standard pour un outil CLI open source perso |
-| Classification de couche (v0.1) | Par **préfixe** (`stg_`, `int_`, `fct_`, `dim_`), codé en dur | Les préfixes sont une convention dbt publique (Kimball), pas un jargon métier confidentiel. Le dossier (`models/staging/`, etc.) sert de vérification secondaire, pas de critère principal — évite l'ambiguïté dossier vs préfixe |
+| Classification de couche (v0.1) | Par **préfixe** (`stg_`, `int_`, `fct_`, `dim_`), codé en dur. *Remplacé en v0.2 : préfixes lus dans `config.layers` ([v0.2-config-pypi.md](v0.2-config-pypi.md)).* | Les préfixes sont une convention dbt publique (Kimball), pas un jargon métier confidentiel. Le dossier (`models/staging/`, etc.) sert de vérification secondaire, pas de critère principal — évite l'ambiguïté dossier vs préfixe |
 | Sévérité et code de sortie | Seul un code `error` fait échouer la CI (exit 1). Un `warning` s'affiche mais exit 0 | Évite une incohérence quand la sévérité (v0.2) sera introduite après le code de sortie (v0.1) |
 | Portée de `-- noqa: CODE` | Ligne courante uniquement | Convention `sqlfluff`, plus précis qu'une désactivation fichier entier |
-| Mapping schéma Oracle (`convert`, v0.3) | Flag CLI ou fichier de mapping, pas d'inférence depuis le SQL seul | Une requête legacy ne contient pas le nom de schéma/base cible |
+| Mapping schéma Oracle (`convert`, v0.3) | Flag CLI ou fichier de mapping, pas d'inférence depuis le SQL seul. *Tranché en v0.3 : mapping dans `dbtidy.yml` ([v0.3-convert.md](v0.3-convert.md)).* | Une requête legacy ne contient pas le nom de schéma/base cible |
 
 ## Tâches
 
-- [ ] Valider l'idée avec le tuteur (projet open source perso, utilisable ensuite par l'équipe)
+- [x] ~~Valider l'idée avec le tuteur (projet open source perso, utilisable ensuite par l'équipe)~~ — abandonnée (décision du 9 octobre 2026)
 - [x] Vérifier la disponibilité du nom `dbtidy` sur PyPI
 - [x] Ajouter un fichier `LICENSE` (MIT) et le champ `license` dans `pyproject.toml`
 - [x] Tester `sqlglot` (dialecte `oracle`) sur 10 à 15 requêtes Oracle typiques : jointures `(+)`, `NVL`, `DECODE`, `ROWNUM`, `CONNECT BY`, `MERGE`
@@ -98,21 +98,21 @@ Un modèle sans préfixe connu : couche inconnue, aucune règle de couche appliq
 
 ### Structure et outillage
 
-Correctifs appliqués au projet généré (à reporter dans `python-project-template` pour que `cruft update` ne les réintroduise pas) :
+Correctifs appliqués au projet généré (à reporter dans `python-project-template` pour que `cruft update` ne les réintroduise pas ; suivi dans « Reste à faire » du journal) :
 
 - `.gitignore` ignorait `src/dbtidy/log/` et `src/dbtidy/config/` : ces paquets n'étaient pas versionnés, alors que `__main__.py` importe `dbtidy.log`. Remplacé par `*.log`.
 - Packaging : `where = ["."]` + `include = ["src*"]` exposait `src.dbtidy`. Remplacé par `where = ["src"]` ; pytest `pythonpath = ["src"]`.
 - `setuptools>=77` requis pour `license = "MIT"` (PEP 639).
-- `uv.lock` est ignoré par le template : la CI fait `uv sync` sans `--locked`.
+- `uv.lock` était ignoré par le template, donc la CI résolvait les versions à chaque exécution. Corrigé le 9 octobre 2026 : `uv.lock` versionné et `uv sync --locked` dans les workflows `ci`, `docs` et `publish`, pour que la CI teste la même version de `sqlglot` qu'en local.
 
 pre-commit : ruff format, ruff check et mypy au commit, pytest au push. Installation : `uv run pre-commit install --hook-type pre-commit --hook-type pre-push`.
 
 ## Terminé quand
 
-- Un script de 20 lignes parse une requête Oracle legacy et affiche ses tables, jointures et agrégations.
-- La CI est verte.
-- Le fichier `LICENSE` est présent et référencé dans `pyproject.toml`.
-- Les décisions ci-dessus sont reportées dans la roadmap (`docs/specs/roadmap-sql-oracle-dbt.md`).
+- [x] Un script parse une requête Oracle legacy et affiche ses tables, jointures et agrégations (`docs/spikes/sqlglot_oracle.py`, 71 lignes au lieu de 20, avec les 15 requêtes).
+- [x] La CI est verte.
+- [x] Le fichier `LICENSE` est présent et référencé dans `pyproject.toml`.
+- [x] Les décisions ci-dessus sont reportées dans la roadmap (`docs/specs/roadmap-sql-oracle-dbt.md`), avec l'avancement de la phase 0.
 
 ## Hors scope
 

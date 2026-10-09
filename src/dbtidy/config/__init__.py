@@ -14,6 +14,7 @@ from pydantic import (
     ValidationInfo,
     field_validator,
 )
+from pydantic_core import ErrorDetails
 
 CONFIG_FILE = "dbtidy.yml"
 
@@ -122,10 +123,13 @@ class Config(_Strict):
 
     @field_validator("rules", mode="before")
     @classmethod
-    def _off_from_yaml(cls, value: object) -> object:
-        """Convertit `off` non quoté, que YAML 1.1 lit comme `False`."""
+    def _normalize(cls, value: object) -> object:
+        """Codes en majuscules ; `off` non quoté (lu `False` par YAML 1.1) → `off`."""
         if isinstance(value, dict):
-            return {k: Severity.OFF if v is False else v for k, v in value.items()}
+            return {
+                str(k).upper(): Severity.OFF if v is False else v
+                for k, v in value.items()
+            }
         return value
 
     @field_validator("rules")
@@ -153,10 +157,37 @@ def _merge(base: dict[str, object], override: dict[str, object]) -> dict[str, ob
     return merged
 
 
+_MESSAGES = {
+    "extra_forbidden": "clé inconnue",
+    "missing": "clé obligatoire manquante",
+    "int_parsing": "nombre entier attendu",
+    "int_type": "nombre entier attendu",
+    "list_type": "liste attendue",
+    "dict_type": "dictionnaire attendu",
+    "model_type": "dictionnaire attendu",
+    "string_type": "texte attendu",
+    "path_type": "chemin attendu",
+}
+
+
+def _french(item: ErrorDetails) -> str:
+    """Traduit une erreur pydantic, ou garde son message si le type est imprévu."""
+    ctx = item.get("ctx", {})
+    kind = item["type"]
+    if kind in ("enum", "literal_error"):
+        expected = str(ctx["expected"]).replace("'", "").replace(" or ", " ou ")
+        return f"valeur invalide, attendu {expected}"
+    if kind == "value_error":
+        return str(ctx["error"])
+    if kind == "greater_than":
+        return f"doit être supérieur à {ctx['gt']}"
+    return _MESSAGES.get(kind, item["msg"])
+
+
 def _describe(error: ValidationError) -> str:
-    """Une ligne par erreur pydantic : clé fautive puis raison."""
+    """Une ligne par erreur pydantic : clé fautive puis raison, en français."""
     return "\n".join(
-        f"  {'.'.join(str(part) for part in item['loc'])}: {item['msg']}"
+        f"  {'.'.join(str(part) for part in item['loc'])}: {_french(item)}"
         for item in error.errors()
     )
 

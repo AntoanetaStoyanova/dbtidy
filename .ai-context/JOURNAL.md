@@ -12,12 +12,15 @@
   ## [YYYY-MM-DD] — <titre court de la session>
   ### Fait
   ### Reste à faire
+
+- Après la publication de la v0.2 : `/workspace-plan v0.3-convert` (découpage d'une requête legacy en modèles stg, int et mart, `sources.yml`, modernisation, `-- TODO`).
+
   ### Références
 -->
 
 ---
 
-## [2026-10-09] — v0.2 : configuration, règles ORA/NAM, hook pre-commit, doc et packaging
+## [2026-10-09] — v0.2 terminée, plan v0.3 convert rédigé
 
 ### Fait
 
@@ -119,22 +122,98 @@
   - `docs/api.rst` ajouté (référence de l'API générée par `automodule` sur `config`, `bin.check`, `bin.rules`, `bin.layers` et `bin.jinja`) et lié depuis `index.rst` ; l'`automodule` du template avait disparu à la réécriture de l'index ;
   - `docs/conf.py` : `default_role = "literal"`, parce que les docstrings mettent le code entre backticks simples ; sans ce réglage, `-- noqa` s'affichait « – noqa » en italique ;
   - `inv docs` (`-W`) OK, sans warning.
+- Projet de test `C:\Users\antoa\programme\dbt_test` (hors dépôt), refait à la demande de l'utilisatrice :
+  - squelette dbt vide (`models/staging|intermediate|marts`, `seeds`, `macros`, `tests`, `analyses`, `snapshots`, `dbt_project.yml`, `dbtidy.yml` entièrement commenté) ;
+  - `requetes/` : 12 requêtes dans le style legacy Oracle, sans commentaire annonçant la règle, et `ATTENDU.md` (résultats attendus et variantes à essayer) ;
+  - `dbtidy check requetes` → 10 violations, 5 avertissements, exit 1. Les pièges passent : `replace(x, ' ', '')`, `NVL` dans un commentaire, `CONNECT BY`, fichier sans préfixe.
+  - **Faux positif trouvé** : STG003 sur le `max()` de `{% if is_incremental() %} where d > (select max(d) from {{ this }})`, le schéma standard d'un modèle incrémental dbt. Piste : ignorer les agrégats d'une sous-requête qui lit `{{ this }}` (placeholder `__jinja_expr`), ou les blocs `{% if is_incremental() %}`. Corrigé ensuite (voir ci-dessous).
+- Correction du faux positif STG003 (validée par l'utilisatrice) :
+  - `jinja.py` : `{{ this }}` est remplacé par un nom factice dédié, `THIS = "__dbt_this"`, au lieu de `__jinja_expr` ;
+  - `rules.py` : `_reads_this(node)` ; STG003 ignore les nœuds dont le `SELECT` englobant lit `THIS` dans son `from_` (clé sqlglot 30). Une agrégation dans le `SELECT` externe reste signalée ;
+  - tests : `test_substitute_this_gets_its_own_name`, `test_stg003_incremental_filter_on_this_is_fine` (avec `{{this}}` sans espaces) et `test_stg003_aggregation_outside_this_subquery_still_flagged` ;
+  - README, `docs/rules.rst`, CHANGELOG (section « Modifié » de la 0.2.0) et `dbt_test/requetes/ATTENDU.md` mis à jour ;
+  - CI verte : 96 tests, couverture 99 %. `dbt_test/requetes` donne 9 violations (au lieu de 10), jaffle_shop reste à 22.
+- `dbt_test/essai/fct_factures.sql` : requête d'essai écrite pour que l'utilisatrice teste elle-même ; le résultat n'est pas montré, à comparer quand elle l'enverra.
+- Clarification avec l'utilisatrice : elle attendait que le paquet découpe une requête en modèles staging, intermediate et mart écrits dans les bons dossiers. C'est `convert`, prévu en v0.3 dans la roadmap. Les v0.1 et v0.2 ne font que `check` (lecture et rapport, aucun fichier écrit). Recommandation : publier la v0.2, puis `/workspace-plan v0.3-convert`.
+- Procédure de vérification locale de la v0.2 donnée à l'utilisatrice : `inv ci`, `inv docs`, `uv build`, `uv tool install --force`, `dbt_test`, jaffle_shop avec deux configurations, `pre-commit try-repo`.
+- Test par l'utilisatrice : `dbtidy check requetes` après rebuild → 9 violations et 5 avertissements, conforme à `ATTENDU.md` (correction STG003 présente). Le venv `(dbtidy)` était activé : pour tester le wheel installé, il faut faire `deactivate` puis vérifier avec `where.exe dbtidy`. Liste d'essais complémentaires donnée (exit code, essai/, NAM002, configuration invalide, noqa, NAM001, JSON, SQL réel).
+- Test par l'utilisatrice de `essai/fct_factures.sql` : 2 violations et 4 avertissements, conforme à l'attendu (ORA005 ×2, ORA002, ORA003, ORA001, ORA004 ; rien pour `replace`, `sum() over` et `FACTURE_ID`, NAM002 étant `off`). Ses essais avec `STG999` ont mis en évidence des messages d'erreur pydantic en anglais (`Value error,`, `Extra inputs are not permitted`) ; la clé `Configuration dbtidy` venait de la première ligne de commentaire de `dbtidy.yml`, décommentée par erreur.
+- Messages de configuration traduits (validé par l'utilisatrice) :
+  - `config/__init__.py` : `_french(item)` traduit selon le type d'erreur pydantic (`extra_forbidden` → « clé inconnue » ; `enum` et `literal_error` → « valeur invalide, attendu … ou … » ; `value_error` → message de notre `ValueError` sans le préfixe « Value error, » ; `greater_than`, `int_parsing`, `list_type`, `dict_type`, etc.). Pour un type imprévu, le message pydantic d'origine est gardé ;
+  - `tests/test_config.py` : `test_error_messages_in_french` paramétré sur 8 cas ;
+  - `docs/configuration.rst` (exemple d'erreur) et CHANGELOG mis à jour ;
+  - CI verte : 104 tests, couverture 99 %.
+- `dbt_test/requetes/ATTENDU.md` et `dbt_test/.gitignore` ont été supprimés par l'utilisatrice : ils ne sont pas recréés.
+- Décisions de l'utilisatrice : mener le projet jusqu'au bout (v0.3 `convert`, v0.4 `explain`), sans validation par le tuteur. Prochain sujet : comprendre concrètement le fonctionnement de `convert` avant de le planifier.
+- `uv build` et `uv run --project` régénèrent `src/dbtidy.egg-info/`, un artefact ignoré par git : rien à commiter.
+- Message de commit proposé : `feat: v0.2.0 — configuration dbtidy.yml, sévérités, règles ORA/NAM, validate-config, hook pre-commit, doc Sphinx et publication PyPI`. L'utilisatrice a déjà indexé tous les fichiers, sauf `.cruft.json` et `.cruftignore` (fins de ligne seulement) et `.ai-context/CURRENT.md`.
+- v0.2 commitée par l'utilisatrice (`51aa4de`).
+- `/workspace-plan v0.3-convert` : `docs/specs/v0.3-convert.md` et `docs/plans/v0.3-convert.md` créés (9 étapes). Décisions de l'utilisatrice :
+  - intermediate dès qu'il y a une jointure, de la logique métier ou une transformation ; chaque CTE devient un `int_` ; l'agrégation et le `SELECT` final vont dans le mart ;
+  - mapping schéma → source dans `dbtidy.yml` (`convert.sources`), `--name` pour le mart, sinon `fct_` + nom du fichier ;
+  - conversion de jointures, `(+)`, `NVL`, `DECODE`, CTE, `GROUP BY` et analytiques ; `-- TODO` pour les sous-requêtes corrélées, `CONNECT BY`, `UNION` et le PL/SQL ;
+  - un staging existant est réutilisé ; pas d'écrasement sans `--force` ;
+  - preuve par des tests de structure d'abord, Oracle Free dans une étape séparée à la fin ;
+  - un spike sur 3 requêtes avant de figer la spec : les décisions marquées *(à confirmer)* seront tranchées à l'étape 1.
+  - Choix par défaut ajoutés :
+    - PL/SQL et `MERGE` refusés (exit 2) ;
+    - `--dry-run` ;
+    - `sources.yml` complété des tables manquantes ;
+    - exit 1 si TODO ;
+    - modules dans `src/dbtidy/bin/convert/` ;
+    - test Oracle marqué `oracle`, hors CI.
+- Spec v0.3 : section « Règles de découpage » ajoutée (validée par l'utilisatrice). Chaque élément SQL a une couche fixe :
+  - le staging ne fait que sélectionner les colonnes et mettre les noms en casse (ni `WHERE`, ni alias, ni expression) ;
+  - un `GROUP BY` / `DISTINCT` / `HAVING` reste dans le `int_` de sa CTE (changement de grain, guide dbt) et va dans le mart s'il est dans la requête principale ;
+  - top N `ROWNUM` → `FETCH FIRST` ; `ORDER BY` seul retiré des CTE et conservé dans le mart ; autre `ROWNUM` → `-- TODO` ;
+  - pas d'intermediate vide ; `SUM(NVL(x, 0))` séparé entre int (`COALESCE`) et mart (`SUM`).
+  - Plan mis à jour : étapes 1, 3, 4 et 6.
+- Spec et plan v0.3 : noms des fichiers générés précisés, et option `--rename ANCIEN=NOUVEAU` ajoutée (validée par l'utilisatrice) pour les CTE mal nommées (`t1` → `int_clients_actifs`) et les collisions entre conversions. Pas de préfixage par le nom du mart.
+- Revue de la spec et du plan v0.3. Décisions de l'utilisatrice :
+  - colonne sans préfixe dans une jointure, `*` ou `t.*` → exit 2 ;
+  - ce qui porte sur un agrégat dans la requête principale (alias, calcul, `OVER`) → mart ;
+  - sources organisées par source : `<staging>/<source>/_<source>__sources.yml` et les `stg_` dans ce dossier.
+  Autres corrections :
+  - top N limité au motif imbriqué `(SELECT … ORDER BY) WHERE ROWNUM <= n`, car au même niveau Oracle filtre avant de trier → `-- TODO` ;
+  - auto-jointure → un seul staging ;
+  - sous-requête non corrélée du `WHERE`/`SELECT` → dans le modèle qui la contient ;
+  - exit 2 pour : sous-requête du `FROM` sans alias, collision de noms dans une conversion, nom de modèle plus long que `oracle.max_identifier_length`, `--name` sans préfixe mart, staging existant incomplet ;
+  - préfixes tirés de `config.layers` ;
+  - « sans erreur `check` » exclut les modèles `-- TODO` ;
+  - étape 6 du plan scindée (6 : int et mart ; 7 : agrégats, TODO, `convert_query`), donc 10 étapes ;
+  - `dbt-oracle` dans un groupe `oracle` ;
+  - comparaison Oracle en listes triées.
+- Revue de `docs/plans/phase-0-fondations.md` : plan clos, aucun développement restant.
+  - Roadmap : avancement de la phase 0 coché, préfixes « configurables depuis la v0.2 », mapping de schéma renvoyé vers `dbtidy.yml` (v0.3).
+  - Plan : décisions dépassées annotées (préfixes → v0.2, mapping → v0.3), critères de fin cochés, tâche tuteur barrée (abandonnée).
+  - `uv.lock` versionné (retiré de `.gitignore`) et `uv sync --locked` dans `ci.yml`, `docs.yml` et `publish.yml` (validé par l'utilisatrice) : la CI teste les mêmes versions qu'en local, `sqlglot` compris.
+- Revue de `docs/plans/v0.1-check.md` : plan clos, aucun développement restant. Notes « Remplacé en v0.2 » (sévérités, préfixes) et liens vers les plans v0.2 et v0.3 dans « Hors scope ».
+- Revue des modules Python, puis corrections (validées par l'utilisatrice) :
+  - `rules.py` : ORA004 ne plante plus sur `'' = ''` (`StopIteration` dans un générateur) ;
+  - `jinja.py` : les `{# #}` sont blanchis avant `find_calls` et `substitute` (`_blank_comments`), ce qui supprime les faux STG001/STG004 ;
+  - `check.py` : `_NOQA` ne lit que des codes (`[a-z]+\d+`), un texte libre peut suivre ; un modèle sans token SQL (`sqlglot.tokenize` vide) n'a aucune violation ; « fichier illisible » distingué de « SQL non analysable » ;
+  - `config` : codes de règle mis en majuscules (`_normalize`) ;
+  - 8 tests ajoutés ; CHANGELOG 0.2.0 (« Corrigé »), README et `docs/cli.rst` (noqa) ;
+  - CI verte : 112 tests, couverture 99 %.
+  - `log/`, `data/`, `notebook/` (hérités du template, inutilisés) : conservés pour le moment (décision de l'utilisatrice).
 
 ### Reste à faire
 
+- Exécuter docs/plans/v0.3-convert.md — Étape 1 : Spike : découpage de 3 requêtes.
 - Actions humaines de l'étape 8 (prises en charge par l'utilisatrice) :
-  1. commiter (sur demande), puis pousser `develop` et `main` ;
+  1. pousser `develop` et `main` ;
   2. sur pypi.org, ajouter un « pending publisher » (dépôt `AntoanetaStoyanova/dbtidy`, workflow `publish.yml`, environnement `pypi`) ;
   3. GitHub Settings → Pages → Source : GitHub Actions ;
   4. taguer et pousser `v0.2.0` ;
   5. vérifier `pip install dbtidy` (0.2.0), puis cocher le dernier critère du plan.
-- Phase 0 : valider l'idée avec le tuteur (seule tâche non cochée, action humaine). Vérifier que la CI GitHub passe au premier push (non poussé).
-- Reporter les correctifs `.gitignore` / packaging / `setuptools>=77` dans `python-project-template`.
-- Commit de la v0.2 (non commitée). Des modifications sans rapport sont en attente dans `.cruft.json`, `.cruftignore`, `CONTRIBUTING.md`, `docs/conf.py`, `docs/index.rst`, `src/dbtidy/__init__.py` et `tasks/__init__.py` : uniquement des fins de ligne (CRLF/LF), à ne pas inclure dans le commit.
+- Vérifier que la CI GitHub passe au premier push. L'utilisatrice ne passera pas par le tuteur (décision du 2026-10-09) : la tâche de phase 0 est abandonnée.
+- Reporter les correctifs `.gitignore` (dont `uv.lock` versionné) / packaging / `setuptools>=77` / `uv sync --locked` dans `python-project-template`.
+- `.cruft.json` et `.cruftignore` : modifications de fins de ligne (CRLF/LF) seulement, à ne pas commiter.
 - Spikes `docs/spikes/` : à garder comme trace ou supprimer (logique reprise dans `src/dbtidy/bin/jinja.py`).
 
 ### Références
 
+- [docs/specs/v0.3-convert.md](../docs/specs/v0.3-convert.md), [docs/plans/v0.3-convert.md](../docs/plans/v0.3-convert.md)
 - [docs/plans/v0.2-config-pypi.md](../docs/plans/v0.2-config-pypi.md), [docs/specs/v0.2-config-pypi.md](../docs/specs/v0.2-config-pypi.md)
 - [src/dbtidy/config/__init__.py](../src/dbtidy/config/__init__.py), [tests/test_config.py](../tests/test_config.py)
 - [src/dbtidy/bin/layers.py](../src/dbtidy/bin/layers.py), [src/dbtidy/bin/check.py](../src/dbtidy/bin/check.py), [src/dbtidy/__main__.py](../src/dbtidy/__main__.py), [tests/test_check.py](../tests/test_check.py), [src/dbtidy/bin/rules.py](../src/dbtidy/bin/rules.py), [README.md](../README.md)

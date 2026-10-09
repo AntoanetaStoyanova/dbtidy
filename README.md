@@ -80,7 +80,7 @@ Une clé, une sévérité ou un code de règle inconnu est une erreur (exit 2), 
 | --- | --- |
 | STG001 | Un modèle staging ne lit qu'une seule source |
 | STG002 | Pas de jointure dans le staging |
-| STG003 | Pas d'agrégation dans le staging (`GROUP BY`, `SUM`, `COUNT`, `DISTINCT`…) |
+| STG003 | Pas d'agrégation dans le staging (`GROUP BY`, `SUM`, `COUNT`, `DISTINCT`…), hors fonctions analytiques et filtre incrémental sur `{{ this }}` |
 | STG004 | Le staging lit une source, pas un autre modèle (`ref()`) |
 | ORA001 | Jointure Oracle `(+)`, toutes couches |
 | ORA002 | `NVL` à remplacer par `COALESCE` |
@@ -91,7 +91,7 @@ Une clé, une sévérité ou un code de règle inconnu est une erreur (exit 2), 
 | NAM002 | Alias du `SELECT` externe dans une casse différente de `columns_case` (inactive si `null`) |
 
 La couche est déduite du préfixe du fichier, défini par `layers.*.prefixes` dans la configuration ; le dossier ne sert qu'à NAM001.
-Pour ignorer une règle sur une ligne : `-- noqa: STG002` (ou `-- noqa` pour toutes).
+Pour ignorer une règle sur une ligne : `-- noqa: STG002` (ou `-- noqa` pour toutes) ; un texte libre peut suivre les codes.
 
 ### Exemple de sortie
 

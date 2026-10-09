@@ -12,9 +12,14 @@ from beartype import beartype
 _BLOCK = re.compile(r"\{\{.*?\}\}|\{%.*?%\}", re.S)
 _CALL_IN_BLOCK = re.compile(r"\b(ref|source)\s*\(([^)]*)\)")
 _TOP_CALL = re.compile(r"\{\{-?\s*(ref|source)\s*\(([^)]*)\)\s*-?\}\}")
-_ERASED = re.compile(r"\{%.*?%\}|\{#.*?#\}|\{\{-?\s*config\s*\(.*?\)\s*-?\}\}", re.S)
+_COMMENT = re.compile(r"\{#.*?#\}", re.S)
+_ERASED = re.compile(r"\{%.*?%\}|\{\{-?\s*config\s*\(.*?\)\s*-?\}\}", re.S)
 _EXPR = re.compile(r"\{\{.*?\}\}", re.S)
 _EXPR_PLACEHOLDER = "__jinja_expr"
+_THIS = re.compile(r"\{\{-?\s*this\s*-?\}\}")
+
+THIS = "__dbt_this"
+"""Nom factice qui remplace `{{ this }}` (table du modèle lui-même)."""
 
 
 @dataclass(frozen=True)
@@ -75,10 +80,14 @@ def _fill(fake: str, original: str) -> str:
     return fake + "\n" * original.count("\n")
 
 
+def _blank_comments(raw: str) -> str:
+    return _COMMENT.sub(lambda m: _fill("", m.group(0)), raw)
+
+
 @beartype
 def find_calls(raw: str) -> list[JinjaCall]:
     """
-    Liste tous les `ref()`/`source()` du texte brut, y compris dans les macros.
+    Liste les `ref()`/`source()` du texte brut, macros comprises, hors `{# #}`.
 
     Parameters
     ----------
@@ -96,9 +105,10 @@ def find_calls(raw: str) -> list[JinjaCall]:
     [JinjaCall(kind='ref', args=('stg_a',), line=1)]
     """
     calls = []
-    for block in _BLOCK.finditer(raw):
+    text = _blank_comments(raw)
+    for block in _BLOCK.finditer(text):
         for call in _CALL_IN_BLOCK.finditer(block.group(0)):
-            line = _line_at(raw, block.start() + call.start())
+            line = _line_at(text, block.start() + call.start())
             calls.append(JinjaCall(call.group(1), _args(call.group(2)), line))
     return calls
 
@@ -110,7 +120,7 @@ def substitute(raw: str) -> Substitution:
 
     `{{ ref() }}` et `{{ source() }}` deviennent des identifiants factices,
     `{% %}`, `{# #}` et `{{ config() }}` sont effacés, les autres `{{ }}`
-    deviennent un identifiant générique.
+    deviennent un identifiant générique, sauf `{{ this }}` qui devient `THIS`.
 
     Parameters
     ----------
@@ -138,7 +148,8 @@ def substitute(raw: str) -> Substitution:
         mapping[fake] = JinjaCall(m.group(1), args, _line_at(raw, m.start()))
         return _fill(fake, m.group(0))
 
-    sql = _TOP_CALL.sub(replace_call, raw)
+    sql = _TOP_CALL.sub(replace_call, _blank_comments(raw))
     sql = _ERASED.sub(lambda m: _fill("", m.group(0)), sql)
+    sql = _THIS.sub(lambda m: _fill(THIS, m.group(0)), sql)
     sql = _EXPR.sub(lambda m: _fill(_EXPR_PLACEHOLDER, m.group(0)), sql)
     return Substitution(sql, mapping)

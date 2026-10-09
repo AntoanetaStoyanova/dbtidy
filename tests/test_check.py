@@ -34,6 +34,20 @@ def test_noqa_other_code_keeps_violation(write_model: WriteModel) -> None:
     ] == ["STG002"]
 
 
+def test_noqa_codes_followed_by_explanation(write_model: WriteModel) -> None:
+    sql = JOIN_STAGING.replace("c.pays\n", "c.pays  -- noqa: STG002 jointure voulue\n")
+    assert check_file(write_model("stg_clients.sql", sql), Config()) == []
+
+
+@pytest.mark.parametrize(
+    "content", ["", "{{ config(materialized='view') }}\n", "-- vide\n/* rien */\n"]
+)
+def test_model_without_sql_has_no_violation(
+    write_model: WriteModel, content: str
+) -> None:
+    assert check_file(write_model("stg_vide.sql", content), Config()) == []
+
+
 def test_bare_noqa_disables_all(write_model: WriteModel) -> None:
     sql = JOIN_STAGING.replace("c.pays\n", "c.pays  -- noqa\n")
     assert check_file(write_model("stg_clients.sql", sql), Config()) == []
@@ -89,6 +103,13 @@ def test_cli_parse_error_exits_2(
     assert payload["files"] == 2
     assert len(payload["violations"]) == 1
     assert payload["errors"][0]["message"].startswith("SQL non analysable")
+
+
+def test_unreadable_file_reported_as_such(write_model: WriteModel) -> None:
+    path = write_model("stg_latin1.sql", "")
+    path.write_bytes("select 'é' from dual".encode("latin-1"))
+    (error,) = run_check([path], Config()).errors
+    assert error.message.startswith("fichier illisible")
 
 
 def test_cli_missing_path_exits_2(

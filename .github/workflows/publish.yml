@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uv sync
+      - run: uv sync --locked
       - run: uv run inv ci
       - name: Vérifier que le tag correspond à la version
         run: test "${GITHUB_REF_NAME}" = "v$(uv run python -c 'import dbtidy; print(dbtidy.__version__)')"

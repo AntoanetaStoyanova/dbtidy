@@ -7,7 +7,7 @@ from pathlib import Path
 from beartype import beartype
 from sqlglot import exp
 
-from dbtidy.bin.jinja import JinjaCall
+from dbtidy.bin.jinja import THIS, JinjaCall
 from dbtidy.bin.layers import Layer, folder_layer
 from dbtidy.config import Config, Severity
 
@@ -129,11 +129,21 @@ def stg002_no_join(model: Model) -> Iterator[Violation]:
         )
 
 
+def _reads_this(node: exp.Expr) -> bool:
+    """Vrai si le `SELECT` du nœud lit `{{ this }}` (filtre incrémental)."""
+    select = node if isinstance(node, exp.Select) else node.find_ancestor(exp.Select)
+    source = select.args.get("from_") if select else None
+    tables = source.find_all(exp.Table) if source else ()
+    return any(table.name == THIS for table in tables)
+
+
 def stg003_no_aggregation(model: Model) -> Iterator[Violation]:
-    """STG003 : pas d'agrégation dans le staging, hors fonctions analytiques."""
+    """STG003 : pas d'agrégation en staging, hors analytiques et filtre `{{ this }}`."""
     if model.layer is not Layer.STAGING:
         return
     for node in model.tree.walk():
+        if _reads_this(node):
+            continue
         if isinstance(node, exp.Group):
             what = "GROUP BY"
         elif isinstance(node, exp.Distinct):
@@ -204,8 +214,7 @@ def ora003_decode(model: Model) -> Iterator[Violation]:
             _line(node),
             "ORA003",
             f"DECODE dans {node.sql(dialect='oracle')}.",
-            "Réécrivez-le en CASE WHEN ... THEN ... END, plus lisible et "
-            "portable.",
+            "Réécrivez-le en CASE WHEN ... THEN ... END, plus lisible et portable.",
         )
 
 
@@ -219,7 +228,7 @@ def ora004_empty_string(model: Model) -> Iterator[Violation]:
         sides = (node.this, node.expression)
         if not any(_is_empty_string(side) for side in sides):
             continue
-        other = next(side for side in sides if not _is_empty_string(side))
+        other = next((s for s in sides if not _is_empty_string(s)), node.this)
         test = "IS NULL" if isinstance(node, exp.EQ) else "IS NOT NULL"
         yield Violation(
             model.path,

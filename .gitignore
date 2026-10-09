@@ -61,7 +61,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-uv.lock
 .pdm-python
 .pdm-build/
 .pixi
@@ -87,3 +86,6 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 *.parquet
+.cruft.json
+.cruftignore
+uv.lock

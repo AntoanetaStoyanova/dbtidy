@@ -91,4 +91,4 @@ la clé fautive.
 
    $ dbtidy validate-config
    dbtidy: dbtidy.yml: configuration invalide
-     rules.STG002: Input should be 'error', 'warning' or 'off'
+     rules.STG002: valeur invalide, attendu error, warning ou off

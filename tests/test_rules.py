@@ -108,6 +108,27 @@ from {{ source('erp', 'ventes') }}
     assert codes(write_model, "stg_ventes.sql", sql) == []
 
 
+def test_stg003_incremental_filter_on_this_is_fine(write_model: WriteModel) -> None:
+    sql = """{{ config(materialized='incremental') }}
+select id, date_maj
+from {{ source('erp', 'produits') }}
+{% if is_incremental() %}
+where date_maj > (select max(date_maj) from {{this}})
+{% endif %}
+"""
+    assert codes(write_model, "stg_produits.sql", sql) == []
+
+
+def test_stg003_aggregation_outside_this_subquery_still_flagged(
+    write_model: WriteModel,
+) -> None:
+    sql = """select count(*) as n
+from {{ source('erp', 'produits') }}
+where date_maj > (select max(date_maj) from {{ this }})
+"""
+    assert codes(write_model, "stg_produits.sql", sql) == [("STG003", 1)]
+
+
 def test_stg004_ref_in_staging(write_model: WriteModel) -> None:
     sql = "select *\nfrom {{ ref('stg_clients') }}\n"
     (violation,) = check_file(write_model("stg_clients_actifs.sql", sql), Config())
@@ -194,6 +215,13 @@ def test_ora004_empty_string(
     assert (violation.code, violation.line) == ("ORA004", 3)
     assert violation.severity is Severity.ERROR
     assert expected in violation.fix
+
+
+def test_ora004_both_sides_empty(write_model: WriteModel) -> None:
+    sql = "select c.id from {{ ref('stg_clients') }} c where '' = ''"
+    (violation,) = check_file(write_model("int_clients.sql", sql), Config())
+    assert violation.code == "ORA004"
+    assert violation.fix == "Écrivez '' IS NULL."
 
 
 def test_ora004_is_null_is_fine(write_model: WriteModel) -> None:

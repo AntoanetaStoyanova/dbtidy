@@ -30,11 +30,25 @@ respecte le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ### Modifié
 
+- STG003 ignore les agrégations d'un `SELECT` qui lit `{{ this }}`, comme le filtre
+  `{% if is_incremental() %}` d'un modèle incrémental ; `{{ this }}` reçoit son
+  propre nom factice.
 - Le résumé distingue les violations (`error`), les avertissements et les erreurs :
   `N fichier(s) analysé(s), N violation(s), N avertissement(s), N erreur(s).`
-- Une configuration invalide sort en 2, avec la clé fautive dans le message.
+- Une configuration invalide sort en 2, avec la clé fautive et la raison en français.
 - Sans configuration, ORA002 et ORA003 ajoutent des avertissements aux résultats de la
   0.1.0 ; les violations `error` sont inchangées.
+- Les codes de règle de `dbtidy.yml` sont acceptés en minuscules (`stg002: off`).
+- Un fichier illisible (encodage, droits) est signalé « fichier illisible » et non plus
+  « SQL non analysable ».
+
+### Corrigé
+
+- ORA004 plantait sur `'' = ''`.
+- Un `ref()` ou `source()` dans un commentaire Jinja `{# #}` était compté (faux
+  STG001/STG004).
+- `-- noqa: STG002 explication` : le texte après les codes empêchait le `noqa`.
+- Un modèle sans SQL (vide, ou seulement du Jinja et des commentaires) sortait en 2.
 
 ## [0.1.0] — 2026-10-07
 
