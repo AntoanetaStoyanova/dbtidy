@@ -1,8 +1,10 @@
 """Configuration Sphinx pour dbtidy."""
 
+from dbtidy import __version__
+
 project = "dbtidy"
 author = "Antoaneta Stoyanova"
-release = "0.1.0"
+release = __version__
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -11,3 +13,6 @@ extensions = [
 ]
 
 html_theme = "furo"
+
+# Les docstrings utilisent `x` (style Markdown) pour du code.
+default_role = "literal"

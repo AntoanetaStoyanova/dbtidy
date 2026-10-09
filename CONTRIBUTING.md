@@ -19,23 +19,33 @@ def process(data: list[str], limit: int = 10) -> dict[str, int]: ...
 
 ## Docstrings
 
-Obligatoires sur tous les modules, classes et fonctions publiques. Format Google style :
+Obligatoires sur tous les modules, classes et fonctions publiques. Format NumPy, résumé sur la ligne qui suit les guillemets, types repris de la signature :
 
 ```python
 def fetch(url: str, timeout: int = 30) -> bytes:
-    """Télécharge le contenu d'une URL.
+    """
+    Télécharge le contenu d'une URL.
 
-    Args:
-        url: URL cible.
-        timeout: Délai max en secondes.
+    Parameters
+    ----------
+    url : str
+        URL cible.
+    timeout : int
+        Délai max en secondes.
 
-    Returns:
+    Returns
+    -------
+    bytes
         Contenu brut de la réponse.
 
-    Raises:
-        ValueError: Si l'URL est invalide.
+    Raises
+    ------
+    ValueError
+        Si l'URL est invalide.
     """
 ```
+
+Classes : section `Attributes` au même format. Doctests : section `Examples`.
 
 Fonctions privées (`_nom`) : docstring courte en une ligne suffit.
 
@@ -74,7 +84,7 @@ uv run pytest          # lance tous les tests + coverage
 ```
 src/dbtidy/
 ├── __main__.py     # uniquement : from . import main; main()
-├── bin/            # scripts d'entrée CLI
+├── bin/            # modules métier (fonctions), importés en dbtidy.bin.<module>
 ├── config/         # constantes et paramètres
 ├── data/           # chargement / sauvegarde de données
 ├── log/            # configuration des logs (jamais print() en production)

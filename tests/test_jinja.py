@@ -1,4 +1,4 @@
-from dbtidy.jinja import JinjaCall, find_calls, substitute
+from dbtidy.bin.jinja import JinjaCall, find_calls, substitute
 
 MODEL = """{{ config(materialized='view') }}
 {% set statuts = ['A', 'I'] %}

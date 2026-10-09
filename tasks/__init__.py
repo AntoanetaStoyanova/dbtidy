@@ -49,7 +49,7 @@ def ci(c: Context) -> None:
 @task
 def docs(c: Context) -> None:
     """Génère la documentation Sphinx dans docs/_build/html/."""
-    c.run("uv run sphinx-build -b html docs docs/_build/html")
+    c.run("uv run sphinx-build -W -b html docs docs/_build/html")
     print("Documentation disponible dans docs/_build/html/index.html")
 
 

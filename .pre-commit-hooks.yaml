@@ -1,0 +1,6 @@
+- id: dbtidy
+  name: dbtidy
+  description: Linter de projets dbt sur Oracle, attentif aux couches.
+  entry: dbtidy check
+  language: python
+  files: \.sql$

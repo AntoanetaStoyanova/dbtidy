@@ -1,15 +1,36 @@
 [project]
 name = "dbtidy"
-version = "0.1.0"
+version = "0.2.0"
 description = "Linter et convertisseur de projets dbt sur Oracle, attentif aux couches."
 readme = "README.md"
 requires-python = ">=3.13"
 license = "MIT"
 license-files = ["LICENSE"]
+authors = [{ name = "Antoaneta Stoyanova" }]
+keywords = ["dbt", "oracle", "linter", "sql", "data-engineering"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: SQL",
+    "Topic :: Database",
+    "Topic :: Software Development :: Quality Assurance",
+]
 dependencies = [
     "beartype>=0.22.9",
+    "pydantic>=2.14.0",
+    "pyyaml>=6.0.3",
     "sqlglot>=30.21.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/AntoanetaStoyanova/dbtidy"
+Documentation = "https://antoanetastoyanova.github.io/dbtidy/"
+Changelog = "https://github.com/AntoanetaStoyanova/dbtidy/blob/main/CHANGELOG.md"
+Issues = "https://github.com/AntoanetaStoyanova/dbtidy/issues"
 
 [project.scripts]
 dbtidy = "dbtidy.__main__:main"
@@ -77,4 +98,5 @@ dev = [
     "sphinx>=7.0.0",
     "furo>=2024.1.0",
     "pre-commit>=4.6.2",
+    "types-pyyaml>=6.0.12.20260906",
 ]

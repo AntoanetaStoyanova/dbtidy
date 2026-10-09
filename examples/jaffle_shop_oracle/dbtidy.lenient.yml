@@ -1,0 +1,7 @@
+# Configuration tolérante pour un legacy en migration : les écarts d'architecture
+# et les jointures (+) existantes sont signalés sans bloquer.
+rules:
+  STG001: warning
+  STG002: warning
+  STG003: warning
+  ORA001: warning

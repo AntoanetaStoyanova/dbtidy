@@ -9,14 +9,21 @@ from pathlib import Path
 def setup_logging(
     project_name: str, log_dir: Path = Path("logs"), level: int = logging.INFO
 ) -> logging.Logger:
-    """Configure un logger qui écrit sur la console et dans un fichier horodaté.
+    """
+    Configure un logger qui écrit sur la console et dans un fichier horodaté.
 
-    Args:
-        project_name: Nom du logger et préfixe du fichier de log.
-        log_dir: Dossier des fichiers de log, créé si absent.
-        level: Niveau minimal des messages.
+    Parameters
+    ----------
+    project_name : str
+        Nom du logger et préfixe du fichier de log.
+    log_dir : Path
+        Dossier des fichiers de log, créé si absent.
+    level : int
+        Niveau minimal des messages.
 
-    Returns:
+    Returns
+    -------
+    logging.Logger
         Le logger configuré.
     """
     log_dir.mkdir(parents=True, exist_ok=True)

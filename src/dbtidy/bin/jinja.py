@@ -19,12 +19,17 @@ _EXPR_PLACEHOLDER = "__jinja_expr"
 
 @dataclass(frozen=True)
 class JinjaCall:
-    """Appel `ref()` ou `source()` trouvé dans un modèle.
+    """
+    Appel `ref()` ou `source()` trouvé dans un modèle.
 
-    Attributes:
-        kind: `"ref"` ou `"source"`.
-        args: Arguments sans guillemets, par exemple `("erp", "clients")`.
-        line: Ligne de l'appel dans le fichier (à partir de 1).
+    Attributes
+    ----------
+    kind : str
+        `"ref"` ou `"source"`.
+    args : tuple[str, ...]
+        Arguments sans guillemets, par exemple `("erp", "clients")`.
+    line : int
+        Ligne de l'appel dans le fichier (à partir de 1).
     """
 
     kind: str
@@ -39,11 +44,15 @@ class JinjaCall:
 
 @dataclass(frozen=True)
 class Substitution:
-    """Résultat de la neutralisation du Jinja.
+    """
+    Résultat de la neutralisation du Jinja.
 
-    Attributes:
-        sql: SQL parsable, de même nombre de lignes que l'original.
-        mapping: Nom factice → appel Jinja qu'il remplace.
+    Attributes
+    ----------
+    sql : str
+        SQL parsable, de même nombre de lignes que l'original.
+    mapping : dict[str, JinjaCall]
+        Nom factice → appel Jinja qu'il remplace.
     """
 
     sql: str
@@ -68,17 +77,23 @@ def _fill(fake: str, original: str) -> str:
 
 @beartype
 def find_calls(raw: str) -> list[JinjaCall]:
-    """Liste tous les `ref()`/`source()` du texte brut, y compris dans les macros.
+    """
+    Liste tous les `ref()`/`source()` du texte brut, y compris dans les macros.
 
-    Args:
-        raw: Contenu du fichier `.sql`.
+    Parameters
+    ----------
+    raw : str
+        Contenu du fichier `.sql`.
 
-    Returns:
+    Returns
+    -------
+    list[JinjaCall]
         Les appels dans l'ordre d'apparition.
 
-    Examples:
-        >>> find_calls("select * from {{ ref('stg_a') }}")
-        [JinjaCall(kind='ref', args=('stg_a',), line=1)]
+    Examples
+    --------
+    >>> find_calls("select * from {{ ref('stg_a') }}")
+    [JinjaCall(kind='ref', args=('stg_a',), line=1)]
     """
     calls = []
     for block in _BLOCK.finditer(raw):
@@ -90,24 +105,30 @@ def find_calls(raw: str) -> list[JinjaCall]:
 
 @beartype
 def substitute(raw: str) -> Substitution:
-    """Remplace le Jinja par du SQL neutre de même longueur.
+    """
+    Remplace le Jinja par du SQL neutre de même longueur.
 
     `{{ ref() }}` et `{{ source() }}` deviennent des identifiants factices,
     `{% %}`, `{# #}` et `{{ config() }}` sont effacés, les autres `{{ }}`
     deviennent un identifiant générique.
 
-    Args:
-        raw: Contenu du fichier `.sql`.
+    Parameters
+    ----------
+    raw : str
+        Contenu du fichier `.sql`.
 
-    Returns:
+    Returns
+    -------
+    Substitution
         Le SQL obtenu et la table de correspondance des noms factices.
 
-    Examples:
-        >>> s = substitute("select * from {{ ref('stg_a') }}")
-        >>> s.sql
-        'select * from ref__stg_a        '
-        >>> s.mapping["ref__stg_a"].kind
-        'ref'
+    Examples
+    --------
+    >>> s = substitute("select * from {{ ref('stg_a') }}")
+    >>> s.sql
+    'select * from ref__stg_a        '
+    >>> s.mapping["ref__stg_a"].kind
+    'ref'
     """
     mapping: dict[str, JinjaCall] = {}
 

@@ -1,0 +1,6 @@
+# Configuration stricte : casse des colonnes imposée, NVL et DECODE bloquants.
+columns_case: lower
+rules:
+  NAM002: error
+  ORA002: error
+  ORA003: error
