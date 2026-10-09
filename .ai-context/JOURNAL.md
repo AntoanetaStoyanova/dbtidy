@@ -196,25 +196,25 @@
   - 8 tests ajoutés ; CHANGELOG 0.2.0 (« Corrigé »), README et `docs/cli.rst` (noqa) ;
   - CI verte : 112 tests, couverture 99 %.
   - `log/`, `data/`, `notebook/` (hérités du template, inutilisés) : conservés pour le moment (décision de l'utilisatrice).
-- Commit `c1422f8` poussé sur `develop` et `main` : CI et Docs rouges, car `uv.lock` (de nouveau dans `.gitignore`) manquait pour `uv sync --locked`. Décision de l'utilisatrice : ne pas versionner `uv.lock` ; les trois workflows reviennent à `uv sync` (versions résolues à chaque exécution).
+- Commit `c1422f8` poussé sur `develop` et `main` : CI et Docs rouges, car `uv.lock` (de nouveau dans `.gitignore`) manquait pour `uv sync --locked`. Décision de l'utilisatrice : ne pas versionner `uv.lock` ; les trois workflows reviennent à `uv sync` (versions résolues à chaque exécution). Note d'annulation ajoutée dans `docs/plans/phase-0-fondations.md`. Commit poussé sur `develop` et `main` par l'utilisatrice ; procédure de tag `v0.2.0` donnée.
 
 ### Reste à faire
 
 - Exécuter docs/plans/v0.3-convert.md — Étape 1 : Spike : découpage de 3 requêtes.
-- Actions humaines de l'étape 8 (prises en charge par l'utilisatrice) :
-  1. pousser `develop` et `main` ;
-  2. sur pypi.org, ajouter un « pending publisher » (dépôt `AntoanetaStoyanova/dbtidy`, workflow `publish.yml`, environnement `pypi`) ;
-  3. GitHub Settings → Pages → Source : GitHub Actions ;
-  4. taguer et pousser `v0.2.0` ;
+- Actions humaines de l'étape 8 (prises en charge par l'utilisatrice) — `develop` et `main` poussées, pending publisher PyPI déclaré :
+  1. vérifier CI et Docs verts sur `main` ;
+  2. GitHub : environnement `pypi` et Pages → Source : GitHub Actions ;
+  3. taguer et pousser `v0.2.0` (workflow Publish) ;
   5. vérifier `pip install dbtidy` (0.2.0), puis cocher le dernier critère du plan.
 - Vérifier que la CI GitHub passe au premier push. L'utilisatrice ne passera pas par le tuteur (décision du 2026-10-09) : la tâche de phase 0 est abandonnée.
-- Reporter les correctifs `.gitignore` (dont `uv.lock` versionné) / packaging / `setuptools>=77` / `uv sync --locked` dans `python-project-template`.
+- Reporter les correctifs `.gitignore` / packaging / `setuptools>=77` dans `python-project-template` (`uv.lock` reste ignoré, sans `--locked`).
 - `.cruft.json` et `.cruftignore` : modifications de fins de ligne (CRLF/LF) seulement, à ne pas commiter.
 - Spikes `docs/spikes/` : à garder comme trace ou supprimer (logique reprise dans `src/dbtidy/bin/jinja.py`).
 
 ### Références
 
 - [docs/specs/v0.3-convert.md](../docs/specs/v0.3-convert.md), [docs/plans/v0.3-convert.md](../docs/plans/v0.3-convert.md)
+- [docs/plans/phase-0-fondations.md](../docs/plans/phase-0-fondations.md), [.github/workflows/publish.yml](../.github/workflows/publish.yml)
 - [docs/plans/v0.2-config-pypi.md](../docs/plans/v0.2-config-pypi.md), [docs/specs/v0.2-config-pypi.md](../docs/specs/v0.2-config-pypi.md)
 - [src/dbtidy/config/__init__.py](../src/dbtidy/config/__init__.py), [tests/test_config.py](../tests/test_config.py)
 - [src/dbtidy/bin/layers.py](../src/dbtidy/bin/layers.py), [src/dbtidy/bin/check.py](../src/dbtidy/bin/check.py), [src/dbtidy/__main__.py](../src/dbtidy/__main__.py), [tests/test_check.py](../tests/test_check.py), [src/dbtidy/bin/rules.py](../src/dbtidy/bin/rules.py), [README.md](../README.md)
